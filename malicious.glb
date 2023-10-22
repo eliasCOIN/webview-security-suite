@@ -1,0 +1,2 @@
+// Contents of "malicious.glb"
+<script>alert('This should not execute!');</script>
