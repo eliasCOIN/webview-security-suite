@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebView Security Tests (iOS)</title>
+<script>
+  
+  // Camera API Test
+  async function testCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (stream) {
+        alert('Camera Test: Failed - Camera accessed without permission');
+      }
+    } catch (error) {
+      alert('Camera Test: Passed - ' + error.toString());
+    }
+  }
+
+  // File System Access Test
+  function testFileSystem() {
+    alert('File System Test: Skipped - No standard API available for file system access in browsers.');
+  }
+
+
+  // JavaScript Bridge Test
+  function testJSBridge() {
+    try {
+      window.webkit.messageHandlers.unauthorizedFunction.postMessage("data");
+      alert('JS Bridge Test: Failed - Message posted to unauthorized handler');
+    } catch (e) {
+      alert('JS Bridge Test: Passed - ' + e.toString());
+    }
+  }
+
+  // UXSS Test
+  function testUXSS() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const scriptUrl = urlParams.get('uxss');
+      if (scriptUrl) {
+        const scriptTag = document.createElement('script');
+        scriptTag.src = scriptUrl;
+        document.body.appendChild(scriptTag);
+      } else {
+        alert('UXSS Test: No script URL provided in the "uxss" query parameter');
+      }
+    } catch (e) {
+      alert('UXSS Test: Error - ' + e.toString());
+    }
+  }
+
+  // Automatic Phone Call Test
+  function testPhoneCall() {
+    try {
+      window.location.href = "tel:+1234567891"; // Attempts to initiate a phone call
+    } catch (e) {
+      alert('Phone Call Test: Error - ' + e.toString());
+    }
+  }
+
+  // Automatic Redirect Test
+  function testAutoRedirect() {
+    window.location.href = "https://example.com";
+  }
+
+  // Spoof Address Bar Test
+  function spoofAddressBar() {
+    var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
+    if (newWindow) {
+      setTimeout(function() {
+        try {
+          newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
+        } catch (e) {
+          console.error("Can't modify the contents of the new window, this is expected due to browser security measures.", e);
+        }
+      }, 1000);
+    } else {
+      console.error('The new window was not successfully opened.');
+    }
+  }
+
+  // Secure Context Test
+  function testSecureContext() {
+    if (window.isSecureContext) {
+      alert('Secure Context Test: Passed - This page is loaded in a secure context');
+    } else {
+      alert('Secure Context Test: Failed - This page is not loaded in a secure context');
+    }
+  }
+
+  // WebRTC Leak Test
+  function testWebRTCLeak() {
+    const pc = new RTCPeerConnection({iceServers: []});
+    pc.createDataChannel('');
+    pc.createOffer().then(pc.setLocalDescription.bind(pc));
+
+    pc.onicecandidate = (ice) => {
+      if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+      const isLocal = ice.candidate.candidate.includes('192.168.') || ice.candidate.candidate.includes('10.') || ice.candidate.candidate.includes('172.16.');
+      alert(`WebRTC Leak Test: ${(isLocal ? 'Failed' : 'Passed')} - ${(isLocal ? ice.candidate.candidate : 'No local IP leak detected')}`);
+      pc.close();
+    };
+  }
+
+  // Clipboard API Test
+  async function testClipboardAPI() {
+    try {
+      const text = await navigator.clipboard.readText();
+      alert('Clipboard API Test: Failed - Clipboard content: "' + text + '"');
+    } catch (error) {
+      alert('Clipboard API Test: Passed - ' + error.toString());
+    }
+  }
+
+</script>
+</head>
+<body>
+
+<h1>WebView Security Test Page</h1>
+
+<button onclick="testCamera()">Camera API Test</button>
+<button onclick="testFileSystem()">File System Access Test</button>
+<button onclick="testJSBridge()">JavaScript Bridge Test</button>
+<button onclick="testUXSS()">UXSS Test</button>
+<button onclick="testPhoneCall()">Automatic Phone Call Test</button>
+<button onclick="testAutoRedirect()">Automatic Redirect Test</button>
+<button onclick="spoofAddressBar()">Spoof Address Bar</button>
+<button onclick="testSecureContext()">Secure Context Test</button>
+<button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
+<button onclick="testClipboardAPI()">Clipboard API Test</button>
+
+</body>
+</html>
