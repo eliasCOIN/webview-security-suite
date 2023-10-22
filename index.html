@@ -20,7 +20,15 @@
 
   // File System Access Test
   function testFileSystem() {
-    alert('File System Test: Skipped - No standard API available for file system access in browsers.');
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      alert('File System Test: Failed - Accessed file system');
+    };
+    xhr.onerror = function() {
+      alert('File System Test: Passed - Unable to access file system');
+    };
+    xhr.open('GET', 'file:///etc/passwd');
+    xhr.send();
   }
 
 
@@ -115,6 +123,32 @@
     document.body.appendChild(iframe);
   }
 
+    // SSL Certificate Test
+  function testSSLCertificate() {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      alert('SSL Certificate Test: Failed - Invalid SSL certificate accepted');
+    };
+    xhr.onerror = function() {
+      alert('SSL Certificate Test: Passed - Invalid SSL certificate rejected');
+    };
+    xhr.open('GET', 'https://self-signed.badssl.com/'); // This site has a self-signed SSL certificate
+    xhr.send();
+  }
+
+    // Mixed Content Test
+  function testMixedContent() {
+    const img = new Image();
+    img.onload = function() {
+      alert('Mixed Content Test: Failed - Loaded non-secure content');
+    };
+    img.onerror = function() {
+      alert('Mixed Content Test: Passed - Blocked non-secure content');
+    };
+    img.src = 'http://eliascoin.github.io/webview-security-testing-ios/image.jpg'; // HTTP URL for test
+  }
+
+
 </script>
 </head>
 <body>
@@ -131,6 +165,8 @@
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+<button onclick="testSSLCertificate()">SSL Certificate Test</button>
+<button onclick="testMixedContent()">Mixed Content Test</button>
 
 
 </body>
