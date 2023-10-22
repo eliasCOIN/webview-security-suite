@@ -114,6 +114,24 @@
     }
   }
 
+    // GLB File UXSS Test
+  function testGLBFileUXSS() {
+    const iframe = document.createElement('iframe');
+    iframe.src = "https://eliascoin.github.io/webview-security-testing-ios/malicious.glb";
+    iframe.onload = () => {
+      try {
+        if (document.querySelector('#uxssSuccess')) {
+          alert('GLB File UXSS Test: Failed - Script executed from GLB file');
+        } else {
+          alert('GLB File UXSS Test: Passed - No script execution detected');
+        }
+      } catch(e) {
+        alert('GLB File UXSS Test: Passed - ' + e.toString());
+      }
+    };
+    document.body.appendChild(iframe);
+  }
+
 </script>
 </head>
 <body>
@@ -130,6 +148,8 @@
 <button onclick="testSecureContext()">Secure Context Test</button>
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
+<button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+
 
 </body>
 </html>
