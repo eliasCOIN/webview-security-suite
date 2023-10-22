@@ -34,29 +34,6 @@
     }
   }
 
-  // UXSS Test
-  function testUXSS() {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const scriptUrl = urlParams.get('uxss');
-      
-      if (scriptUrl) {
-        const scriptTag = document.createElement('script');
-        scriptTag.src = scriptUrl;
-        document.body.appendChild(scriptTag);
-      } else {
-        const currentUrl = window.location.href.split('?')[0]; 
-        const newScriptUrl = "https://eliascoin.github.io/webview-security-testing-ios/uxssTest.js";
-        const newUrl = `${currentUrl}?uxss=${encodeURIComponent(newScriptUrl)}`;
-        
-        // Redirect to the new URL
-        window.location.href = newUrl;
-      }
-    } catch (e) {
-      alert('UXSS Test: Error - ' + e.toString());
-    }
-  }
-
   // Automatic Phone Call Test
   function testPhoneCall() {
     try {
@@ -147,7 +124,6 @@
 <button onclick="testCamera()">Camera API Test</button>
 <button onclick="testFileSystem()">File System Access Test</button>
 <button onclick="testJSBridge()">JavaScript Bridge Test</button>
-<button onclick="testUXSS()">UXSS Test</button>
 <button onclick="testPhoneCall()">Automatic Phone Call Test</button>
 <button onclick="testAutoRedirect()">Automatic Redirect Test</button>
 <button onclick="spoofAddressBar()">Spoof Address Bar</button>
