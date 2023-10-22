@@ -122,6 +122,19 @@
     document.body.appendChild(iframe);
   }
 
+  function testMixedContent() {
+    const img = new Image();
+    img.onload = function() {
+      alert('Mixed Content Test: Failed - Insecure content loaded');
+      document.body.appendChild(img);
+
+    };
+    img.onerror = function() {
+      alert('Mixed Content Test: Passed - Blocked insecure content');
+    };
+    img.src = 'http://eliascoin.github.io/webview-security-testing-ios/image.png';
+  }
+
 </script>
 </head>
 <body>
@@ -138,6 +151,7 @@
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+<button onclick="testMixedContent()">Mixed Content Test</button> 
 
 
 </body>
