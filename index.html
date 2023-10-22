@@ -138,16 +138,16 @@
 
     // Mixed Content Test
   function testMixedContent() {
-    const img = new Image();
-    img.onload = function() {
-      alert('Mixed Content Test: Failed - Loaded non-secure content');
-    };
-    img.onerror = function() {
-      alert('Mixed Content Test: Passed - Blocked non-secure content');
-    };
-    img.src = 'http://eliascoin.github.io/webview-security-testing-ios/image.jpg'; // HTTP URL for test
-  }
-
+      const testImage = new Image();
+      testImage.src = 'http://eliascoin.github.io/webview-security-testing-ios/image.jpg'; # HTTP only
+      testImage.onload = function() {
+        document.getElementById('mixedContentTestResult').innerHTML = '<p style="color: red;">Mixed Content Test: Failed - Image loaded successfully over HTTP.</p>';
+        document.getElementById('mixedContentTestResult').appendChild(testImage);
+      };
+      testImage.onerror = function() {
+        document.getElementById('mixedContentTestResult').innerHTML = '<p style="color: green;">Mixed Content Test: Passed - Image over HTTP blocked.</p>';
+      };
+    }
 
 </script>
 </head>
