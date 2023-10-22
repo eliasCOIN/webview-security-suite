@@ -20,9 +20,16 @@
 
   // File System Access Test
   function testFileSystem() {
-    alert('File System Test: Skipped - No standard API available for file system access in browsers.');
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      alert('File System Test: Failed - Accessed file system');
+    };
+    xhr.onerror = function() {
+      alert('File System Test: Passed - Unable to access file system');
+    };
+    xhr.open('GET', 'file:///etc/passwd');
+    xhr.send();
   }
-
 
   // JavaScript Bridge Test
   function testJSBridge() {
