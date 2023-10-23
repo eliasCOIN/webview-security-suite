@@ -1,14 +1,20 @@
 # webview-security-testing-ios
 
-## Camera API Test
+## Camera API Test (iOS & Android)
 - Purpose: To ensure the WebView cannot access the device camera without explicit permission.
 - Importance: Prevents unauthorized camera access, protecting user privacy.
 - Expected Result: The test should fail if the camera is accessed without permission.
 
-## File System Access Test
+This script attempts to access the device's camera through the browser's getUserMedia API, and then evaluates the outcome to determine if the camera started streaming without user permission. It operates within a webview common to both iOS and Android, relying on the browser's standardized API to function consistently across different operating systems.
+
+The cross-platform compatibility is possible because the script is written in JavaScript, using the Web APIs (specifically navigator.mediaDevices.getUserMedia) that are supported by modern web browsers, including the webviews used within native iOS and Android applications. This standardization allows the same code to request camera access and handle user permissions in a consistent manner, regardless of the underlying operating system.
+
+## File System Access Test (iOS)
 - Purpose: To verify the WebView cannot access the local file system.
 - Importance: Prevents unauthorized access to files on the device, protecting user data.
 - Expected Result: The test should pass only if the attempt to access the local file system is blocked.
+
+The testFileSystemIOS function attempts to access a sensitive system file on iOS devices using an XMLHttpRequest; if the file is accessible (request succeeds), it's considered a security failure, whereas inability to access (request fails) indicates a secure environment
 
 ## JavaScript Bridge Test
 - Purpose: To check if the WebView restricts the use of the JavaScript bridge to only authorized message handlers.
