@@ -51,11 +51,6 @@
     }
   }
 
-  // Automatic Redirect Test
-  function testAutoRedirect() {
-    window.location.href = "https://example.com";
-  }
-
   // Spoof Address Bar Test
   function spoofAddressBar() {
     var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
@@ -223,7 +218,6 @@ function isPublicIP(ip) {
 <!-- Common tests -->
 <button onclick="testCamera()">Camera API Test</button>
 <button onclick="testPhoneCall()">Automatic Phone Call Test</button>
-<button onclick="testAutoRedirect()">Automatic Redirect Test</button>
 <button onclick="testSecureContext()">Secure Context Test</button>
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
