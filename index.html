@@ -417,12 +417,33 @@ async function testWebRTCLeak() {
 
   // Clipboard API Test
   async function testClipboardAPI() {
+    const testName = 'Clipboard API Test';
+
+    // Attempt to write to the clipboard
+    try {
+      await navigator.clipboard.writeText('Test clipboard write');
+      addTestResult(testName, 'Warning - Write to clipboard was successful', 'warn');
+    } catch (e) {
+      addTestResult(testName, 'Passed - Write to clipboard was blocked', 'pass');
+    }
+
+    // Attempt to read from the clipboard
     try {
       const text = await navigator.clipboard.readText();
-      addTestResult('Clipboard API Test', 'Failed - Clipboard content: "' + text + '"', 'fail');
-    } catch (error) {
-      addTestResult('Clipboard API Test', 'Passed - ' + error.toString(), 'pass');
+      addTestResult(testName, 'Failed - Read from clipboard was successful: ' + text, 'fail');
+    } catch (e) {
+      addTestResult(testName, 'Passed - Read from clipboard was blocked', 'pass');
     }
+
+    // Check clipboard access after a delay
+    setTimeout(async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        addTestResult(testName, 'Failed - Read from clipboard was successful after delay: ' + text, 'fail');
+      } catch (e) {
+        addTestResult(testName, 'Passed - Read from clipboard was blocked after delay', 'pass');
+      }
+    }, 2000); // 2 seconds delay
   }
 
 
