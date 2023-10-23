@@ -107,7 +107,7 @@
     // GLB File UXSS Test
   function testGLBFileUXSS() {
     const iframe = document.createElement('iframe');
-    iframe.src = "https://eliascoin.github.io/webview-security-testing-ios/malicious.glb";
+    iframe.src = "https://eliascoin.github.io/webview-security-suite/malicious.glb";
     iframe.onload = () => {
       try {
         if (document.querySelector('#uxssSuccess')) {
@@ -132,7 +132,7 @@
     img.onerror = function() {
       alert('Mixed Content Test: Passed - Blocked insecure content');
     };
-    img.src = 'http://eliascoin.github.io/webview-security-testing-ios/image.png';
+    img.src = 'https://eliascoin.github.io/webview-security-suite/image.png';
   }
 
   function testIntentUrlScheme() {
