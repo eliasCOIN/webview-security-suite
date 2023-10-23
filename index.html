@@ -90,7 +90,58 @@
       addTestResult(testName, 'Error: ' + error.toString(), 'fail');
     }
   }
-  
+
+    // Camera API Test
+  async function testCamera() {
+    let testName = 'Camera Test';
+    // Check if running in secure context
+    if (!window.isSecureContext) {
+      addTestResult(testName, 'Must be run in a secure context', 'inconclusive');
+      return;
+    }
+    // Check for mediaDevices support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      addTestResult(testName, 'Browser does not support getUserMedia', 'inconclusive');
+      return;
+    }
+
+    try {
+      // Attempt to access the camera
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+      // Check if a stream was obtained
+      if (stream) {
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+          // A timeout to check if the video is playing
+          setTimeout(() => {
+            if (!video.videoWidth) {
+              addTestResult(testName, 'Stream obtained but no video coming through', 'fail');
+            } else {
+              addTestResult(testName, 'Camera accessed without permission', 'fail');
+            }
+            // Stop the video stream
+            stream.getTracks().forEach(track => track.stop());
+          }, 1000);
+        };
+      }
+    } catch (error) {
+      let message = '';
+      if (error.name === 'NotAllowedError') {
+        message = 'Permission denied by the user.';
+      } else if (error.name === 'NotFoundError') {
+        message = 'No camera available on the device.';
+      } else if (error.name === 'NotReadableError') {
+        message = 'Camera hardware error.';
+      } else {
+        message = 'Error: ' + error.toString();
+      }
+      addTestResult(testName, message, 'pass');
+    }
+  }
+
    // Generic function to attempt file read
   async function attemptFileRead(filePath) {
     return new Promise((resolve, reject) => {
@@ -535,6 +586,7 @@ async function testWebRTCLeak() {
 
 <h2>Tests for both iOS & Android</h2>
 <!-- Common tests -->
+<button onclick="testCamera()">Test Camera Access</button>
 <button onclick="testAudio()">Test Audio Access</button>
 <button onclick="testVideo()">Test Video Access</button>
 <button onclick="testMultipleVideoStreams()">Test Multiple Video Streams</button>
