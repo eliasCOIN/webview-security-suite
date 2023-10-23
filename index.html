@@ -37,43 +37,24 @@
   }
 
   
-  // Camera API Test
-  async function testCamera() {
-    const testName = 'Camera API Test';
+    // Generic function to request media devices
+  async function requestMediaDevice(options, testName) {
     try {
-      // Check for video and audio capture permissions by requesting both audio and video streams
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia(options);
       
       // If we get here, no exception was thrown, which means permission was granted
-      addTestResult(testName, 'Failed - Camera and microphone were accessed without proper authorization', 'fail');
+      addTestResult(testName, 'Failed - Accessed without proper authorization', 'fail');
       
-      // Test for multiple streams (e.g., front and back camera)
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
-      
-      if (videoInputDevices.length > 1) {
-        // If there's more than one camera, test each one individually
-        for (let device of videoInputDevices) {
-          const individualStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { deviceId: device.deviceId }
-          });
-          addTestResult(testName, `Failed - Multiple cameras accessed: ${device.label}`, 'fail');
-          // Stop the video stream
-          individualStream.getTracks().forEach(track => track.stop());
-        }
-      }
-
-      // Stop the main stream (video and audio)
+      // Stop the stream
       stream.getTracks().forEach(track => track.stop());
-      
     } catch (error) {
       let message = '';
       if (error.name === 'NotAllowedError') {
         message = 'Permission denied by the user.';
       } else if (error.name === 'NotFoundError') {
-        message = 'No camera or microphone available on the device.';
+        message = 'No device available for the requested media.';
       } else if (error.name === 'NotReadableError') {
-        message = 'Camera or microphone hardware error.';
+        message = 'Hardware error.';
       } else {
         message = 'Error: ' + error.toString();
       }
@@ -81,6 +62,34 @@
     }
   }
 
+  function testAudio() {
+    const testName = 'Audio Access Test';
+    requestMediaDevice({ audio: true }, testName);
+  }
+
+  function testVideo() {
+    const testName = 'Video Access Test';
+    requestMediaDevice({ video: true }, testName);
+  }
+
+  async function testMultipleVideoStreams() {
+    const testName = 'Multiple Video Streams Test';
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+
+      if (videoInputDevices.length > 1) {
+        // If there's more than one camera, test each one individually
+        for (let device of videoInputDevices) {
+          await requestMediaDevice({ video: { deviceId: device.deviceId } }, testName);
+        }
+      } else {
+        addTestResult(testName, 'Passed - Only one video input device available', 'pass');
+      }
+    } catch (error) {
+      addTestResult(testName, 'Error: ' + error.toString(), 'fail');
+    }
+  }
   
    // Generic function to attempt file read
   async function attemptFileRead(filePath) {
@@ -215,48 +224,97 @@ function testJSBridge(platform) {
     });
   }
 
-// Automatic Phone Call Test
-function testPhoneCall() {
-  try {
-    window.location.href = "tel:+1234567891"; // Attempts to initiate a phone call
-    // If no exception is thrown, then it's a fail as the call was initiated without user interaction.
-    addTestResult('Phone Call Test', 'Failed - Phone call initiated without user interaction', 'fail');
-  } catch (e) {
-    // If error, it means the phone call was blocked.
-    addTestResult('Phone Call Test', 'Passed - ' + e.toString(), 'pass');
+
+  function testAutomaticAction(uri, actionName) {
+    const testName = 'Automatic ' + actionName + ' Initiation Test';
+
+    try {
+      // Attempt to initiate the action
+      window.location.href = uri;
+      // If no exception is thrown, the test failed
+      addTestResult(testName, 'Failed - Action initiated without user interaction: ' + uri, 'fail');
+    } catch (e) {
+      // If an exception is thrown, the action was not initiated, which is the expected behavior
+      addTestResult(testName, 'Passed - No automatic action initiated for: ' + uri, 'pass');
+    }
   }
-}
+
 
 // Spoof Address Bar Test
-function spoofAddressBar() {
-  var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
-  if (newWindow) {
-    setTimeout(function() {
-      try {
-        // Trying to spoof the content of the new window.
-        newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
-        // If content is spoofed, it's a security failure.
-        addTestResult('Spoof Address Bar Test', 'Failed - Content spoofed in new window', 'fail');
-      } catch (e) {
-        // If error, it means the content spoofing was blocked.
-        addTestResult('Spoof Address Bar Test', 'Passed - ' + e.toString(), 'pass');
-      }
-    }, 1000);
-  } else {
-    // If the new window couldn't be opened, the test is inconclusive.
-    addTestResult('Spoof Address Bar Test', 'Inconclusive - The new window was not successfully opened.', 'inconclusive');
+  // Function to perform redirection
+  function performRedirection(method, url) {
+    switch(method) {
+      case 'instant':
+        window.location = url;
+        break;
+      case 'timeout':
+        setTimeout(() => { window.location = url; }, 2000); // 2 seconds delay
+        break;
+      case 'meta':
+        var meta = document.createElement('meta');
+        meta.httpEquiv = "refresh";
+        meta.content = "0; url=" + url;
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        break;
+      case 'replace':
+        window.location.replace(url);
+        break;
+      case 'assign':
+        window.location.assign(url);
+        break;
+      default:
+        console.error('Unknown method:', method);
+    }
   }
-}
+
+  // Function to test SSL spoofing
+  function testSSLSpoofing() {
+    // Attempt to load an HTTPS iframe with an invalid certificate
+    var iframe = document.createElement('iframe');
+    // Using a known site with an invalid or self-signed certificate
+    iframe.src = "https://self-signed.badssl.com/";
+    iframe.hidden = true;
+    document.body.appendChild(iframe);
+
+    iframe.onload = function() {
+      addTestResult('SSL Spoofing Test', 'Failed - Loaded HTTPS content with invalid SSL', 'fail');
+    };
+    iframe.onerror = function() {
+      addTestResult('SSL Spoofing Test', 'Passed - Blocked HTTPS content with invalid SSL', 'pass');
+    };
+  }
 
 
   // Secure Context Test
   function testSecureContext() {
+    const testName = 'Secure Context Test';
+    let isSecure = window.location.protocol === 'https:';
+    let message = isSecure ? 'Main page loaded over HTTPS' : 'Main page not loaded over HTTPS';
+
+    addTestResult(testName, message, isSecure ? 'pass' : 'fail');
+
+    // Check if window.isSecureContext is true
     if (window.isSecureContext) {
-      // This page is loaded in a secure context
-      addTestResult('Secure Context Test', 'Passed - This page is loaded in a secure context', 'pass');
+      addTestResult(testName, 'Passed - window.isSecureContext is true', 'pass');
     } else {
-      // This page is not loaded in a secure context
-      addTestResult('Secure Context Test', 'Failed - This page is not loaded in a secure context', 'fail');
+      addTestResult(testName, 'Failed - window.isSecureContext is false', 'fail');
+    }
+
+    // Check all script tags, link tags, and iframes to ensure they're loaded over HTTPS
+    const scriptTags = Array.from(document.getElementsByTagName('script'));
+    const linkTags = Array.from(document.getElementsByTagName('link'));
+    const iframes = Array.from(document.getElementsByTagName('iframe'));
+    const allElements = scriptTags.concat(linkTags).concat(iframes);
+
+    allElements.forEach(element => {
+      const url = element.src || element.href;
+      if (url && url.startsWith('http:')) {
+        isSecure = false;
+        addTestResult(testName, 'Failed - Insecure content loaded: ' + url, 'fail');
+      }
+    });
+    if (isSecure) {
+      addTestResult(testName, 'Passed - All scripts, CSS, and iframes loaded securely', 'pass');
     }
   }
 
@@ -403,21 +461,33 @@ function isPublicIP(ip) {
 
 <h2>Tests for both iOS & Android</h2>
 <!-- Common tests -->
-<button onclick="testCamera()">Camera API Test</button>
-<button onclick="testPhoneCall()">Automatic Phone Call Test</button>
+<button onclick="testAudio()">Test Audio Access</button>
+<button onclick="testVideo()">Test Video Access</button>
+<button onclick="testMultipleVideoStreams()">Test Multiple Video Streams</button>
 <button onclick="testSecureContext()">Secure Context Test</button>
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testMixedContent()">Mixed Content Test</button>
-<button onclick="spoofAddressBar()">Spoof Address Bar</button>
-<button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+<!-- Redirection buttons -->
+<button onclick="performRedirection('instant', 'http://example.com')">Instant Redirection Test</button>
+<button onclick="performRedirection('timeout', 'http://example.com')">Delayed Redirection Test</button>
+<button onclick="performRedirection('meta', 'http://example.com')">Meta Redirection Test</button>
+<button onclick="performRedirection('replace', 'http://example.com')">Replace Redirection Test</button>
+<button onclick="performRedirection('assign', 'http://example.com')">Assign Redirection Test</button>
+<!-- SSL Spoofing button -->
+<button onclick="testSSLSpoofing()">SSL Spoofing Test</button>
 
+  
+<button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+<button onclick="testAutomaticAction('tel:123456', 'Phone Call')">Test Automatic Phone Call</button>
+<button onclick="testAutomaticAction('sms:123456', 'SMS')">Test Automatic SMS</button>
+<button onclick="testAutomaticAction('mailto:test@example.com', 'Email')">Test Automatic Email Client Opening</button>
 
 <h2>iOS Specific Tests</h2>
 <!-- iOS-specific tests -->
-<button onclick="testJSBridge()">JavaScript Bridge Test</button>
 <button onclick="testFileSystemAccess('iOS')">iOS File System Access Test</button>
 <button onclick="testJSBridge('iOS')">iOS JavaScript Bridge Test</button>
+<button onclick="testAutomaticAction('facetime:123456', 'FaceTime')">Test Automatic FaceTime Call</button>
 
 
 <h2>Android Specific Tests</h2>
