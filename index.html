@@ -5,18 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebView Security Tests (iOS & Android)</title>
 <script>
+
+  function addTestResult(testName, result, message) {
+    const resultsContainer = document.getElementById('testResults');
+    const resultEntry = document.createElement('div');
+    resultEntry.textContent = `${testName}: ${result} - ${message}`;
+    resultEntry.style.color = result === 'Passed' ? 'green' : 'red';
+    resultsContainer.appendChild(resultEntry);
+  }
   
   // Camera API Test
  async function testCamera() {
-  // Check if running in secure context
-  if (!window.isSecureContext) {
-    alert('Camera Test: Inconclusive - Must be run in a secure context');
-    return;
+  // Helper function to log test results
+  function addTestResult(testName, result, message) {
+    const resultsContainer = document.getElementById('testResults');
+    const resultEntry = document.createElement('div');
+    resultEntry.textContent = `${testName}: ${result} - ${message}`;
+    resultEntry.style.color = result === 'Passed' ? 'green' : 'red';
+    resultsContainer.appendChild(resultEntry);
   }
 
+  let testName = 'Camera Test';
+  // Check if running in secure context
+  if (!window.isSecureContext) {
+    addTestResult(testName, 'Inconclusive', 'Must be run in a secure context');
+    return;
+  }
   // Check for mediaDevices support
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert('Camera Test: Inconclusive - Browser does not support getUserMedia');
+    addTestResult(testName, 'Inconclusive', 'Browser does not support getUserMedia');
     return;
   }
 
@@ -28,18 +45,15 @@
     if (stream) {
       const video = document.createElement('video');
       video.srcObject = stream;
-
       video.onloadedmetadata = () => {
         video.play();
-
         // A timeout to check if the video is playing
         setTimeout(() => {
           if (!video.videoWidth) {
-            alert('Camera Test: Failed - Stream obtained but no video coming through');
+            addTestResult(testName, 'Failed', 'Stream obtained but no video coming through');
           } else {
-            alert('Camera Test: Failed - Camera accessed without permission');
+            addTestResult(testName, 'Failed', 'Camera accessed without permission');
           }
-
           // Stop the video stream
           stream.getTracks().forEach(track => track.stop());
         }, 1000);
@@ -56,9 +70,10 @@
     } else {
       message = 'Error: ' + error.toString();
     }
-    alert('Camera Test: Passed - ' + message);
+    addTestResult(testName, 'Passed', message);
   }
 }
+
   
   // File System Access Test for iOS
   function testFileSystemIOS() {
@@ -282,6 +297,11 @@ function isPublicIP(ip) {
 <button onclick="testContentScheme()">Android Content Scheme Test</button>
 
 
+<!-- Test results section -->
+<div id="testResults" style="margin-top: 20px;">
+  <h2>Test Results:</h2>
+</div>
+  
 
 </body>
 </html>
