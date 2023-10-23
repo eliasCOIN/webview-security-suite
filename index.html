@@ -17,17 +17,18 @@
       alert('Camera Test: Passed - ' + error.toString());
     }
   }
-
-  // File System Access Test
-  function testFileSystem() {
-    const xhr = new XMLHttpRequest();
+  
+  // File System Access Test for iOS
+  function testFileSystemIOS() {
+    var xhr = new XMLHttpRequest();
     xhr.onload = function() {
-      alert('File System Test: Failed - Accessed file system');
+      alert('iOS File System Test: Failed - Accessed file system');
     };
     xhr.onerror = function() {
-      alert('File System Test: Passed - Unable to access file system');
+      alert('iOS File System Test: Passed - Unable to access file system');
     };
-    xhr.open('GET', 'file:///etc/passwd');
+    // Attempting to access a sensitive file which should be inaccessible
+    xhr.open('GET', 'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist');
     xhr.send();
   }
 
@@ -205,7 +206,6 @@ function isPublicIP(ip) {
 <h2>Tests for both iOS & Android</h2>
 <!-- Common tests -->
 <button onclick="testCamera()">Camera API Test</button>
-<button onclick="testFileSystem()">File System Access Test</button>
 <button onclick="testPhoneCall()">Automatic Phone Call Test</button>
 <button onclick="testAutoRedirect()">Automatic Redirect Test</button>
 <button onclick="testSecureContext()">Secure Context Test</button>
@@ -213,11 +213,14 @@ function isPublicIP(ip) {
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testMixedContent()">Mixed Content Test</button>
 <button onclick="spoofAddressBar()">Spoof Address Bar</button>
+<button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+
 
 <h2>iOS Specific Tests</h2>
 <!-- iOS-specific tests -->
 <button onclick="testJSBridge()">JavaScript Bridge Test</button>
-<button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
+<button onclick="testFileSystemIOS()">File System Access Test</button>
+
 
 <h2>Android Specific Tests</h2>
 <!-- Android-specific tests -->
