@@ -196,6 +196,10 @@ function isPublicIP(ip) {
     }
   }
 
+    // Android Content Scheme Access Test
+  function testContentScheme() {
+    window.location.href = "https://eliascoin.github.io/webview-security-suite/contentUIAndroid.php";
+  }
 
 </script>
 </head>
@@ -227,6 +231,7 @@ function isPublicIP(ip) {
 <button onclick="testIntentUrlScheme()">Intent URL Scheme Test</button>
 <button onclick="testFileAccess()">File Access Test</button>
 <button onclick="testJSInterfaceExposure()">JavaScript Interface Exposure Test</button>
+<button onclick="testContentScheme()">Android Content Scheme Test</button>
 
 
 
