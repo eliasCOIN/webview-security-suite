@@ -89,21 +89,32 @@
   }
 
   
-// File System Access Test for iOS
-function testFileSystemIOS() {
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function() {
-    // If the request is successful, it's a security failure.
-    addTestResult('iOS File System Test', 'Failed - Accessed file system', 'fail');
-  };
-  xhr.onerror = function() {
-    // If the request fails, it's a security pass.
-    addTestResult('iOS File System Test', 'Passed - Unable to access file system', 'pass');
-  };
-  // Attempting to access a sensitive file which should be inaccessible
-  xhr.open('GET', 'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist');
-  xhr.send();
-}
+  // File System Access Test for iOS
+  function testFileSystemIOS() {
+    const filesToTest = [
+      'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist',
+      'file:///var/mobile/Library/SMS/sms.db',
+      'file:///var/containers/Bundle/Application/',
+      'file:///var/mobile/Library/AddressBook/AddressBook.sqlitedb'
+    ];
+  
+    filesToTest.forEach((filePath) => {
+      var xhr = new XMLHttpRequest();
+      xhr.onload = function() {
+        // Non-2xx/3xx responses are treated as an error, but we're not getting that far if we're blocked by security
+        addTestResult('iOS File System Test', `Failed - Accessed file system at path: ${filePath}`, 'fail');
+      };
+      xhr.onerror = function(error) {
+        if (xhr.status === 0) {
+          addTestResult('iOS File System Test', `Passed - Unable to access file system at path: ${filePath}`, 'pass');
+        } else {
+          addTestResult('iOS File System Test', `Inconclusive - Request for ${filePath} failed with status: ${xhr.status}`, 'inconclusive');
+        }
+      };
+      xhr.open('GET', filePath);
+      xhr.send();
+    });
+  }
 
 // JavaScript Bridge Test
 function testJSBridge() {
