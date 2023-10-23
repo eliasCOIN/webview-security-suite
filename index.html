@@ -1,87 +1,103 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebView Security Tests (iOS & Android)</title>
+<style>
+  .result-pass {
+    color: green;
+  }
+
+  .result-fail {
+    color: red;
+  }
+
+  .result-inconclusive {
+    color: orange;
+  }
+</style>
 <script>
 
-  function addTestResult(testName, result, message) {
-    const resultsContainer = document.getElementById('testResults');
-    const resultEntry = document.createElement('div');
-    resultEntry.textContent = `${testName}: ${result} - ${message}`;
-    resultEntry.style.color = result === 'Passed' ? 'green' : 'red';
-    resultsContainer.appendChild(resultEntry);
+  function addTestResult(testName, message, status) {
+    var testResults = document.getElementById('testResults');
+    var result = document.createElement('p');
+    result.textContent = testName + ': ' + message;
+  
+    switch (status) {
+      case 'pass':
+        result.className = 'result-pass';
+        break;
+      case 'fail':
+        result.className = 'result-fail'; 
+        break;
+      default:
+        result.className = 'result-inconclusive';
+    }
+    testResults.appendChild(result);
   }
+
   
   // Camera API Test
- async function testCamera() {
-  // Helper function to log test results
-  function addTestResult(testName, result, message) {
-    const resultsContainer = document.getElementById('testResults');
-    const resultEntry = document.createElement('div');
-    resultEntry.textContent = `${testName}: ${result} - ${message}`;
-    resultEntry.style.color = result === 'Passed' ? 'green' : 'red';
-    resultsContainer.appendChild(resultEntry);
-  }
-
-  let testName = 'Camera Test';
-  // Check if running in secure context
-  if (!window.isSecureContext) {
-    addTestResult(testName, 'Inconclusive', 'Must be run in a secure context');
-    return;
-  }
-  // Check for mediaDevices support
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    addTestResult(testName, 'Inconclusive', 'Browser does not support getUserMedia');
-    return;
-  }
-
-  try {
-    // Attempt to access the camera
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-    // Check if a stream was obtained
-    if (stream) {
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.onloadedmetadata = () => {
-        video.play();
-        // A timeout to check if the video is playing
-        setTimeout(() => {
-          if (!video.videoWidth) {
-            addTestResult(testName, 'Failed', 'Stream obtained but no video coming through');
-          } else {
-            addTestResult(testName, 'Failed', 'Camera accessed without permission');
-          }
-          // Stop the video stream
-          stream.getTracks().forEach(track => track.stop());
-        }, 1000);
-      };
+  async function testCamera() {
+    let testName = 'Camera Test';
+    // Check if running in secure context
+    if (!window.isSecureContext) {
+      addTestResult(testName, 'Must be run in a secure context', 'inconclusive');
+      return;
     }
-  } catch (error) {
-    let message = '';
-    if (error.name === 'NotAllowedError') {
-      message = 'Permission denied by the user.';
-    } else if (error.name === 'NotFoundError') {
-      message = 'No camera available on the device.';
-    } else if (error.name === 'NotReadableError') {
-      message = 'Camera hardware error.';
-    } else {
-      message = 'Error: ' + error.toString();
+    // Check for mediaDevices support
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      addTestResult(testName, 'Browser does not support getUserMedia', 'inconclusive');
+      return;
     }
-    addTestResult(testName, 'Passed', message);
+
+    try {
+      // Attempt to access the camera
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+      // Check if a stream was obtained
+      if (stream) {
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          video.play();
+          // A timeout to check if the video is playing
+          setTimeout(() => {
+            if (!video.videoWidth) {
+              addTestResult(testName, 'Stream obtained but no video coming through', 'fail');
+            } else {
+              addTestResult(testName, 'Camera accessed without permission', 'fail');
+            }
+            // Stop the video stream
+            stream.getTracks().forEach(track => track.stop());
+          }, 1000);
+        };
+      }
+    } catch (error) {
+      let message = '';
+      if (error.name === 'NotAllowedError') {
+        message = 'Permission denied by the user.';
+      } else if (error.name === 'NotFoundError') {
+        message = 'No camera available on the device.';
+      } else if (error.name === 'NotReadableError') {
+        message = 'Camera hardware error.';
+      } else {
+        message = 'Error: ' + error.toString();
+      }
+      addTestResult(testName, message, 'pass');
+    }
   }
-}
 
   
 // File System Access Test for iOS
 function testFileSystemIOS() {
   var xhr = new XMLHttpRequest();
   xhr.onload = function() {
+    // If the request is successful, it's a security failure.
     addTestResult('iOS File System Test', 'Failed - Accessed file system', 'fail');
   };
   xhr.onerror = function() {
+    // If the request fails, it's a security pass.
     addTestResult('iOS File System Test', 'Passed - Unable to access file system', 'pass');
   };
   // Attempting to access a sensitive file which should be inaccessible
@@ -93,19 +109,23 @@ function testFileSystemIOS() {
 function testJSBridge() {
   try {
     window.webkit.messageHandlers.unauthorizedFunction.postMessage("data");
+    // If no error, unauthorized function access succeeded, which shouldn't happen.
     addTestResult('JS Bridge Test', 'Failed - Message posted to unauthorized handler', 'fail');
   } catch (e) {
+    // If error, it means the unauthorized access was blocked.
     addTestResult('JS Bridge Test', 'Passed - ' + e.toString(), 'pass');
   }
 }
+
 
 // Automatic Phone Call Test
 function testPhoneCall() {
   try {
     window.location.href = "tel:+1234567891"; // Attempts to initiate a phone call
-    // If no exception is thrown, then it's a fail as the call was initiated without user interaction
+    // If no exception is thrown, then it's a fail as the call was initiated without user interaction.
     addTestResult('Phone Call Test', 'Failed - Phone call initiated without user interaction', 'fail');
   } catch (e) {
+    // If error, it means the phone call was blocked.
     addTestResult('Phone Call Test', 'Passed - ' + e.toString(), 'pass');
   }
 }
@@ -116,13 +136,17 @@ function spoofAddressBar() {
   if (newWindow) {
     setTimeout(function() {
       try {
+        // Trying to spoof the content of the new window.
         newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
+        // If content is spoofed, it's a security failure.
         addTestResult('Spoof Address Bar Test', 'Failed - Content spoofed in new window', 'fail');
       } catch (e) {
+        // If error, it means the content spoofing was blocked.
         addTestResult('Spoof Address Bar Test', 'Passed - ' + e.toString(), 'pass');
       }
     }, 1000);
   } else {
+    // If the new window couldn't be opened, the test is inconclusive.
     addTestResult('Spoof Address Bar Test', 'Inconclusive - The new window was not successfully opened.', 'inconclusive');
   }
 }
@@ -131,36 +155,41 @@ function spoofAddressBar() {
   // Secure Context Test
   function testSecureContext() {
     if (window.isSecureContext) {
-      alert('Secure Context Test: Passed - This page is loaded in a secure context');
+      // This page is loaded in a secure context
+      addTestResult('Secure Context Test', 'Passed - This page is loaded in a secure context', 'pass');
     } else {
-      alert('Secure Context Test: Failed - This page is not loaded in a secure context');
+      // This page is not loaded in a secure context
+      addTestResult('Secure Context Test', 'Failed - This page is not loaded in a secure context', 'fail');
     }
   }
 
   // WebRTC Leak Test
-  function testWebRTCLeak() {
-    const pc = new RTCPeerConnection({iceServers: []});
-    pc.createDataChannel('');
-    pc.createOffer().then(offer => pc.setLocalDescription(offer));
-  
-    pc.onicecandidate = (ice) => {
-      if (!ice || !ice.candidate || !ice.candidate.candidate) return;
-      const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
-      const match = ice.candidate.candidate.match(ipRegex);
-      if (!match) {
-        alert('WebRTC Leak Test: Error - No IP address detected in ICE candidate');
-        pc.close();
-        return;
-      }
-      const ip = match[1];
-      if (isPublicIP(ip)) {
-        alert(`WebRTC Leak Test: Failed - Public IP detected: ${ip}`);
-      } else {
-        alert('WebRTC Leak Test: Passed - No public IP leak detected');
-      }
+  // WebRTC Leak Test
+function testWebRTCLeak() {
+  const pc = new RTCPeerConnection({iceServers: []});
+  pc.createDataChannel('');
+  pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+  pc.onicecandidate = (ice) => {
+    if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+    const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
+    const match = ice.candidate.candidate.match(ipRegex);
+    if (!match) {
+      addTestResult('WebRTC Leak Test', 'Error - No IP address detected in ICE candidate', 'error');
       pc.close();
-    };
-  }
+      return;
+    }
+    const ip = match[1];
+    if (isPublicIP(ip)) {
+      // Public IP detected
+      addTestResult('WebRTC Leak Test', 'Failed - Public IP detected: ' + ip, 'fail');
+    } else {
+      // No public IP leak detected
+      addTestResult('WebRTC Leak Test', 'Passed - No public IP leak detected', 'pass');
+    }
+    pc.close();
+  };
+}
 
 function isPublicIP(ip) {
   const parts = ip.split('.').map(str => parseInt(str));
@@ -183,11 +212,12 @@ function isPublicIP(ip) {
   async function testClipboardAPI() {
     try {
       const text = await navigator.clipboard.readText();
-      alert('Clipboard API Test: Failed - Clipboard content: "' + text + '"');
+      addTestResult('Clipboard API Test', 'Failed - Clipboard content: "' + text + '"', 'fail');
     } catch (error) {
-      alert('Clipboard API Test: Passed - ' + error.toString());
+      addTestResult('Clipboard API Test', 'Passed - ' + error.toString(), 'pass');
     }
   }
+
 
     // GLB File UXSS Test
   function testGLBFileUXSS() {
@@ -196,47 +226,48 @@ function isPublicIP(ip) {
     iframe.onload = () => {
       try {
         if (document.querySelector('#uxssSuccess')) {
-          alert('GLB File UXSS Test: Failed - Script executed from GLB file');
+          addTestResult('GLB File UXSS Test', 'Failed - Script executed from GLB file', 'fail');
         } else {
-          alert('GLB File UXSS Test: Passed - No script execution detected');
+          addTestResult('GLB File UXSS Test', 'Passed - No script execution detected', 'pass');
         }
       } catch(e) {
-        alert('GLB File UXSS Test: Passed - ' + e.toString());
+        addTestResult('GLB File UXSS Test', 'Passed - ' + e.toString(), 'pass');
       }
     };
     document.body.appendChild(iframe);
   }
 
-  function testMixedContent() {
+  // Mixed Content Test
+ function testMixedContent() {
     const img = new Image();
     img.onload = function() {
-      alert('Mixed Content Test: Failed - Insecure content loaded');
+      addTestResult('Mixed Content Test', 'Failed - Insecure content loaded', 'fail');
+      // Optional: If you want to display the loaded image
       document.body.appendChild(img);
-
     };
     img.onerror = function() {
-      alert('Mixed Content Test: Passed - Blocked insecure content');
+      addTestResult('Mixed Content Test', 'Passed - Blocked insecure content', 'pass');
     };
-    img.src = 'https://eliascoin.github.io/webview-security-suite/image.png';
+    img.src = 'http://eliascoin.github.io/webview-security-suite/image.png';
   }
 
   function testIntentUrlScheme() {
     try {
       window.location.href = "intent://#Intent;package=com.coinbase.android;end;";
-      alert('Intent URL Scheme Test: Failed - Intent URL initiated without user interaction');
+      addTestResult('Intent URL Scheme Test', 'Failed - Intent URL initiated without user interaction', 'fail');
     } catch (e) {
-      alert('Intent URL Scheme Test: Passed - ' + e.toString());
+      addTestResult('Intent URL Scheme Test', 'Passed - ' + e.toString(), 'pass');
     }
   }
 
-    function testFileAccess() {
+  function testFileAccess() {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState == XMLHttpRequest.DONE) {
         if(xhr.responseText) {
-          alert('File Access Test: Failed - Accessed file content: ' + xhr.responseText);
+          addTestResult('File Access Test', 'Failed - Accessed file content: ' + xhr.responseText, 'fail');
         } else {
-          alert('File Access Test: Passed - File access restricted');
+          addTestResult('File Access Test', 'Passed - File access restricted', 'pass');
         }
       }
     };
@@ -246,28 +277,28 @@ function isPublicIP(ip) {
 
   function testJSInterfaceExposure() {
     if (window.Android) {
-      alert('JS Interface Exposure Test: Failed - JS Interface is exposed');
+      addTestResult('JS Interface Exposure Test', 'Failed - JS Interface is exposed', 'fail');
     } else {
-      alert('JS Interface Exposure Test: Passed - No JS Interface exposure detected');
+      addTestResult('JS Interface Exposure Test', 'Passed - No JS Interface exposure detected', 'pass');
     }
   }
 
     // Android Content Scheme Access Test
-    function testContentUriAccess() {
-      const iframe = document.createElement('iframe');
-      iframe.src = "content://0@media/external/file/123";
-      iframe.onload = () => {
-        try {
-          alert('Content URI Access Test: Failed - Loaded content from content:// URI');
-        } catch (e) {
-          alert('Content URI Access Test: Passed - ' + e.toString());
-        }
-      };
-      iframe.onerror = () => {
-        alert('Content URI Access Test: Passed - Could not load content from content:// URI');
-      };
-      document.body.appendChild(iframe);
-    }
+  function testContentUriAccess() {
+    const iframe = document.createElement('iframe');
+    iframe.src = "content://0@media/external/file/123";
+    iframe.onload = () => {
+      try {
+        addTestResult('Content URI Access Test', 'Failed - Loaded content from content:// URI', 'fail');
+      } catch (e) {
+        addTestResult('Content URI Access Test', 'Passed - ' + e.toString(), 'pass');
+      }
+    };
+    iframe.onerror = () => {
+      addTestResult('Content URI Access Test', 'Passed - Could not load content from content:// URI', 'pass');
+    };
+    document.body.appendChild(iframe);
+  }
 
 </script>
 </head>
