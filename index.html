@@ -39,48 +39,41 @@
   
   // Camera API Test
   async function testCamera() {
-    let testName = 'Camera Test';
-    // Check if running in secure context
-    if (!window.isSecureContext) {
-      addTestResult(testName, 'Must be run in a secure context', 'inconclusive');
-      return;
-    }
-    // Check for mediaDevices support
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      addTestResult(testName, 'Browser does not support getUserMedia', 'inconclusive');
-      return;
-    }
-
+    const testName = 'Camera API Test';
     try {
-      // Attempt to access the camera
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-      // Check if a stream was obtained
-      if (stream) {
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        video.onloadedmetadata = () => {
-          video.play();
-          // A timeout to check if the video is playing
-          setTimeout(() => {
-            if (!video.videoWidth) {
-              addTestResult(testName, 'Stream obtained but no video coming through', 'fail');
-            } else {
-              addTestResult(testName, 'Camera accessed without permission', 'fail');
-            }
-            // Stop the video stream
-            stream.getTracks().forEach(track => track.stop());
-          }, 1000);
-        };
+      // Check for video and audio capture permissions by requesting both audio and video streams
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      
+      // If we get here, no exception was thrown, which means permission was granted
+      addTestResult(testName, 'Failed - Camera and microphone were accessed without proper authorization', 'fail');
+      
+      // Test for multiple streams (e.g., front and back camera)
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoInputDevices.length > 1) {
+        // If there's more than one camera, test each one individually
+        for (let device of videoInputDevices) {
+          const individualStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { deviceId: device.deviceId }
+          });
+          addTestResult(testName, `Failed - Multiple cameras accessed: ${device.label}`, 'fail');
+          // Stop the video stream
+          individualStream.getTracks().forEach(track => track.stop());
+        }
       }
+
+      // Stop the main stream (video and audio)
+      stream.getTracks().forEach(track => track.stop());
+      
     } catch (error) {
       let message = '';
       if (error.name === 'NotAllowedError') {
         message = 'Permission denied by the user.';
       } else if (error.name === 'NotFoundError') {
-        message = 'No camera available on the device.';
+        message = 'No camera or microphone available on the device.';
       } else if (error.name === 'NotReadableError') {
-        message = 'Camera hardware error.';
+        message = 'Camera or microphone hardware error.';
       } else {
         message = 'Error: ' + error.toString();
       }
@@ -89,45 +82,138 @@
   }
 
   
-  // File System Access Test for iOS
-  function testFileSystemIOS() {
-    const filesToTest = [
-      'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist',
-      'file:///var/mobile/Library/SMS/sms.db',
-      'file:///var/containers/Bundle/Application/',
-      'file:///var/mobile/Library/AddressBook/AddressBook.sqlitedb'
-    ];
-  
-    filesToTest.forEach((filePath) => {
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        // Non-2xx/3xx responses are treated as an error, but we're not getting that far if we're blocked by security
-        addTestResult('iOS File System Test', `Failed - Accessed file system at path: ${filePath}`, 'fail');
-      };
-      xhr.onerror = function(error) {
-        if (xhr.status === 0) {
-          addTestResult('iOS File System Test', `Passed - Unable to access file system at path: ${filePath}`, 'pass');
+   // Generic function to attempt file read
+  async function attemptFileRead(filePath) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', filePath, true);
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          resolve(xhr.responseText);  // File content
         } else {
-          addTestResult('iOS File System Test', `Inconclusive - Request for ${filePath} failed with status: ${xhr.status}`, 'inconclusive');
+          reject('File not accessible');
         }
       };
-      xhr.open('GET', filePath);
+      xhr.onerror = () => reject('File not accessible');
       xhr.send();
     });
   }
 
-// JavaScript Bridge Test
-function testJSBridge() {
-  try {
-    window.webkit.messageHandlers.unauthorizedFunction.postMessage("data");
-    // If no error, unauthorized function access succeeded, which shouldn't happen.
-    addTestResult('JS Bridge Test', 'Failed - Message posted to unauthorized handler', 'fail');
-  } catch (e) {
-    // If error, it means the unauthorized access was blocked.
-    addTestResult('JS Bridge Test', 'Passed - ' + e.toString(), 'pass');
+  // Generic function to attempt file write
+  async function attemptFileWrite(filePath, content = 'test') {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', filePath, true);
+      xhr.onload = () => {
+        if (xhr.status === 200 || xhr.status === 201 || xhr.status === 204) {
+          resolve('File written successfully');
+        } else {
+          reject('File write failed');
+        }
+      };
+      xhr.onerror = () => reject('File write failed');
+      xhr.send(content);
+    });
   }
-}
 
+  async function testFileSystemAccess(platform) {
+    const testName = 'File System Access Test';
+    let filesToTest = [];
+
+    if (platform === 'iOS') {
+      filesToTest = [
+        'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist',
+        'file:///var/mobile/Library/SMS/sms.db',
+        'file:///var/containers/Bundle/Application/',
+        'file:///var/mobile/Library/AddressBook/AddressBook.sqlitedb'
+        // ...other iOS specific paths...
+      ];
+    } else if (platform === 'Android') {
+      filesToTest = [
+        'file:///data/data/com.android.providers.telephony/databases/mmssms.db',
+        'file:///sdcard/',
+        'file:///data/system/users/0/accounts.db'
+        // ...other Android specific paths...
+      ];
+    } else {
+      console.error('Unknown platform:', platform);
+      return;
+    }
+
+    for (let filePath of filesToTest) {
+      try {
+        const content = await attemptFileRead(filePath);
+        addTestResult(testName, 'Failed - Accessed file content: ' + content, 'fail');
+      } catch (readError) {
+        // Read failed, which is expected and good. Now we try to write.
+        try {
+          await attemptFileWrite(filePath);
+          addTestResult(testName, 'Failed - File written to: ' + filePath, 'fail');
+        } catch (writeError) {
+          // Both read and write failed, which is good.
+          addTestResult(testName, 'Passed - File access restricted for: ' + filePath, 'pass');
+        }
+      }
+    }
+  }
+
+// JavaScript Bridge Test
+function testJSBridge(platform) {
+  const testName = 'JavaScript Bridge Test';
+  let bridgeObjects = [];
+  let commonNativeMethods = [
+    'log',
+    'alert',
+    'sendMessage',
+    'receiveMessage',
+  ];
+
+  if (platform === 'iOS') {
+    bridgeObjects = [
+      'window.webkit.messageHandlers',
+    ];
+  } else if (platform === 'Android') {
+    bridgeObjects = [
+      'window.Android',
+      'window.android',
+    ];
+  } else {
+    console.error('Unknown platform:', platform);
+    return;
+  }
+   bridgeObjects.forEach(bridgeObject => {
+      let isBridgeExposed = false;
+      let exposedMethods = [];
+
+      // Check if the bridge object is exposed
+      try {
+        if (eval(bridgeObject) !== undefined) {
+          isBridgeExposed = true;
+          addTestResult(testName, `Failed - Bridge object exposed: ${bridgeObject}`, 'fail');
+
+          // Try to call common native methods
+          commonNativeMethods.forEach(method => {
+            try {
+              eval(`${bridgeObject}.${method}('test')`);
+              exposedMethods.push(method);
+            } catch (e) {
+              // Method not accessible, which is expected and good
+            }
+          });
+
+          if (exposedMethods.length > 0) {
+            addTestResult(testName, `Failed - Exposed methods in ${bridgeObject}: ${exposedMethods.join(', ')}`, 'fail');
+          }
+        }
+      } catch (e) {
+        // Bridge object not accessible, which is expected and good
+      }
+
+      if (!isBridgeExposed) {
+        addTestResult(testName, `Passed - No bridge object exposed for: ${bridgeObject}`, 'pass');
+      }
+    });
+  }
 
 // Automatic Phone Call Test
 function testPhoneCall() {
@@ -330,7 +416,8 @@ function isPublicIP(ip) {
 <h2>iOS Specific Tests</h2>
 <!-- iOS-specific tests -->
 <button onclick="testJSBridge()">JavaScript Bridge Test</button>
-<button onclick="testFileSystemIOS()">File System Access Test</button>
+<button onclick="testFileSystemAccess('iOS')">iOS File System Access Test</button>
+<button onclick="testJSBridge('iOS')">iOS JavaScript Bridge Test</button>
 
 
 <h2>Android Specific Tests</h2>
@@ -339,6 +426,8 @@ function isPublicIP(ip) {
 <button onclick="testFileAccess()">File Access Test</button>
 <button onclick="testJSInterfaceExposure()">JavaScript Interface Exposure Test</button>
 <button onclick="testContentScheme()">Android Content Scheme Test</button>
+<button onclick="testFileSystemAccess('Android')">Android File System Access Test</button>
+<button onclick="testJSBridge('Android')">Android JavaScript Bridge Test</button>
 
 
 <!-- Test results section -->
