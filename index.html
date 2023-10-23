@@ -197,9 +197,21 @@ function isPublicIP(ip) {
   }
 
     // Android Content Scheme Access Test
-  function testContentScheme() {
-    window.location.href = "https://eliascoin.github.io/webview-security-suite/contentUIAndroid.php";
-  }
+    function testContentUriAccess() {
+      const iframe = document.createElement('iframe');
+      iframe.src = "content://0@media/external/file/123";
+      iframe.onload = () => {
+        try {
+          alert('Content URI Access Test: Failed - Loaded content from content:// URI');
+        } catch (e) {
+          alert('Content URI Access Test: Passed - ' + e.toString());
+        }
+      };
+      iframe.onerror = () => {
+        alert('Content URI Access Test: Passed - Could not load content from content:// URI');
+      };
+      document.body.appendChild(iframe);
+    }
 
 </script>
 </head>
