@@ -26,11 +26,6 @@ The testFileSystemIOS function attempts to access a sensitive system file on iOS
 -Importance: Prevents malicious automatic calls, protecting the user from fraud and unexpected charges.
 - Expected Result: The test should pass if automatic phone calls cannot be initiated.
 
-## Automatic Redirect Test
-- To ensure the WebView does not allow automatic redirection to potentially malicious websites.
-- Importance: Prevents phishing attacks and unexpected content exposure.
-- Expected Result: The test should pass if automatic redirections are blocked.
-
 ## Spoof Address Bar
 - Purpose: To verify that the WebView is not susceptible to address bar spoofing.
 - Importance: Ensures users can trust the URL displayed, preventing phishing attacks.
@@ -40,6 +35,10 @@ The testFileSystemIOS function attempts to access a sensitive system file on iOS
 - Purpose: To check if the WebView enforces secure contexts (HTTPS).
 - Importance: Ensures data integrity and confidentiality through encryption, protecting user data from man-in-the-middle attacks.
 - Expected Result: The test should pass if the page is loaded in a secure context.
+
+The function testSecureContext() is used to check if the web content loaded in your app's WebView is being displayed in a secure context. If it's not, this could be a sign that your app is vulnerable to eavesdropping or tampering, particularly if sensitive information is being transmitted.
+
+By ensuring that window.isSecureContext returns true, you're taking a step to affirm that the connection is secure, encrypted, and less prone to certain kinds of attacks. This is part of best practices for maintaining the security of your users' data and your app's integrity.
 
 ## WebRTC Leak Test
 - Purpose: To ensure the WebView does not leak local IP addresses through WebRTC.
