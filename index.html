@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebView Security Tests (iOS)</title>
+<title>WebView Security Tests (iOS & Android)</title>
 <script>
   
   // Camera API Test
@@ -175,6 +175,7 @@
 <h1>WebView Security Test Page</h1>
 
 <h2>Tests for both iOS & Android</h2>
+<!-- Common tests -->
 <button onclick="testCamera()">Camera API Test</button>
 <button onclick="testFileSystem()">File System Access Test</button>
 <button onclick="testPhoneCall()">Automatic Phone Call Test</button>
@@ -185,18 +186,17 @@
 <button onclick="testMixedContent()">Mixed Content Test</button>
 <button onclick="spoofAddressBar()">Spoof Address Bar</button>
 
-
-<!-- Tests Specific to iOS -->
 <h2>iOS Specific Tests</h2>
+<!-- iOS-specific tests -->
 <button onclick="testJSBridge()">JavaScript Bridge Test</button>
 <button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
 
-<!-- Tests Specific to Android -->
 <h2>Android Specific Tests</h2>
+<!-- Android-specific tests -->
 <button onclick="testIntentUrlScheme()">Intent URL Scheme Test</button>
 <button onclick="testFileAccess()">File Access Test</button>
 <button onclick="testJSInterfaceExposure()">JavaScript Interface Exposure Test</button>
-<button onclick="testFileAccess()">File Access Test</button>
+
 
 
 </body>
