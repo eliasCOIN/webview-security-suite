@@ -75,54 +75,58 @@
 }
 
   
-  // File System Access Test for iOS
-  function testFileSystemIOS() {
-    var xhr = new XMLHttpRequest();
-    xhr.onload = function() {
-      alert('iOS File System Test: Failed - Accessed file system');
-    };
-    xhr.onerror = function() {
-      alert('iOS File System Test: Passed - Unable to access file system');
-    };
-    // Attempting to access a sensitive file which should be inaccessible
-    xhr.open('GET', 'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist');
-    xhr.send();
-  }
+// File System Access Test for iOS
+function testFileSystemIOS() {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function() {
+    addTestResult('iOS File System Test', 'Failed - Accessed file system', 'fail');
+  };
+  xhr.onerror = function() {
+    addTestResult('iOS File System Test', 'Passed - Unable to access file system', 'pass');
+  };
+  // Attempting to access a sensitive file which should be inaccessible
+  xhr.open('GET', 'file:///var/mobile/Library/Preferences/com.apple.iphonesimulator.plist');
+  xhr.send();
+}
 
-  // JavaScript Bridge Test
-  function testJSBridge() {
-    try {
-      window.webkit.messageHandlers.unauthorizedFunction.postMessage("data");
-      alert('JS Bridge Test: Failed - Message posted to unauthorized handler');
-    } catch (e) {
-      alert('JS Bridge Test: Passed - ' + e.toString());
-    }
+// JavaScript Bridge Test
+function testJSBridge() {
+  try {
+    window.webkit.messageHandlers.unauthorizedFunction.postMessage("data");
+    addTestResult('JS Bridge Test', 'Failed - Message posted to unauthorized handler', 'fail');
+  } catch (e) {
+    addTestResult('JS Bridge Test', 'Passed - ' + e.toString(), 'pass');
   }
+}
 
-  // Automatic Phone Call Test
-  function testPhoneCall() {
-    try {
-      window.location.href = "tel:+1234567891"; // Attempts to initiate a phone call
-    } catch (e) {
-      alert('Phone Call Test: Error - ' + e.toString());
-    }
+// Automatic Phone Call Test
+function testPhoneCall() {
+  try {
+    window.location.href = "tel:+1234567891"; // Attempts to initiate a phone call
+    // If no exception is thrown, then it's a fail as the call was initiated without user interaction
+    addTestResult('Phone Call Test', 'Failed - Phone call initiated without user interaction', 'fail');
+  } catch (e) {
+    addTestResult('Phone Call Test', 'Passed - ' + e.toString(), 'pass');
   }
+}
 
-  // Spoof Address Bar Test
-  function spoofAddressBar() {
-    var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
-    if (newWindow) {
-      setTimeout(function() {
-        try {
-          newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
-        } catch (e) {
-          console.error("Can't modify the contents of the new window, this is expected due to browser security measures.", e);
-        }
-      }, 1000);
-    } else {
-      console.error('The new window was not successfully opened.');
-    }
+// Spoof Address Bar Test
+function spoofAddressBar() {
+  var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
+  if (newWindow) {
+    setTimeout(function() {
+      try {
+        newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
+        addTestResult('Spoof Address Bar Test', 'Failed - Content spoofed in new window', 'fail');
+      } catch (e) {
+        addTestResult('Spoof Address Bar Test', 'Passed - ' + e.toString(), 'pass');
+      }
+    }, 1000);
+  } else {
+    addTestResult('Spoof Address Bar Test', 'Inconclusive - The new window was not successfully opened.', 'inconclusive');
   }
+}
+
 
   // Secure Context Test
   function testSecureContext() {
