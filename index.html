@@ -175,7 +175,6 @@ function spoofAddressBar() {
   }
 
   // WebRTC Leak Test
-  // WebRTC Leak Test
 function testWebRTCLeak() {
   const pc = new RTCPeerConnection({iceServers: []});
   pc.createDataChannel('');
@@ -253,13 +252,12 @@ function isPublicIP(ip) {
     const img = new Image();
     img.onload = function() {
       addTestResult('Mixed Content Test', 'Failed - Insecure content loaded', 'fail');
-      // Optional: If you want to display the loaded image
       document.body.appendChild(img);
     };
     img.onerror = function() {
       addTestResult('Mixed Content Test', 'Passed - Blocked insecure content', 'pass');
     };
-    img.src = 'http://eliascoin.github.io/webview-security-suite/image.png';
+    img.src = 'http://eliascoin.github.io/webview-security-suite/image.jpg';
   }
 
   function testIntentUrlScheme() {
