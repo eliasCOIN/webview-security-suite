@@ -7,16 +7,58 @@
 <script>
   
   // Camera API Test
-  async function testCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (stream) {
-        alert('Camera Test: Failed - Camera accessed without permission');
-      }
-    } catch (error) {
-      alert('Camera Test: Passed - ' + error.toString());
-    }
+ async function testCamera() {
+  // Check if running in secure context
+  if (!window.isSecureContext) {
+    alert('Camera Test: Inconclusive - Must be run in a secure context');
+    return;
   }
+
+  // Check for mediaDevices support
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Camera Test: Inconclusive - Browser does not support getUserMedia');
+    return;
+  }
+
+  try {
+    // Attempt to access the camera
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+    // Check if a stream was obtained
+    if (stream) {
+      const video = document.createElement('video');
+      video.srcObject = stream;
+
+      video.onloadedmetadata = () => {
+        video.play();
+
+        // A timeout to check if the video is playing
+        setTimeout(() => {
+          if (!video.videoWidth) {
+            alert('Camera Test: Failed - Stream obtained but no video coming through');
+          } else {
+            alert('Camera Test: Failed - Camera accessed without permission');
+          }
+
+          // Stop the video stream
+          stream.getTracks().forEach(track => track.stop());
+        }, 1000);
+      };
+    }
+  } catch (error) {
+    let message = '';
+    if (error.name === 'NotAllowedError') {
+      message = 'Permission denied by the user.';
+    } else if (error.name === 'NotFoundError') {
+      message = 'No camera available on the device.';
+    } else if (error.name === 'NotReadableError') {
+      message = 'Camera hardware error.';
+    } else {
+      message = 'Error: ' + error.toString();
+    }
+    alert('Camera Test: Passed - ' + message);
+  }
+}
   
   // File System Access Test for iOS
   function testFileSystemIOS() {
