@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dapp</title>
+</head>
+<body>
+    <button onclick="getAddress()">Get Address</button>
+    <button onclick="spamTransactions()">Spam Transactions</button>
+
+    <script>
+        function getAddress() {
+            if (window.ethereum) {
+                window.ethereum.request({ method: 'eth_requestAccounts' });
+            }
+        }
+
+        async function spamTransactions() {
+            if (window.ethereum) {
+                for (let i = 0; i < 10; i++) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'eth_sendTransaction',
+                            params: [{
+                                from: [Your_Address_Here], // replace with your address
+                                to: '0x0000000000000000000000000000000000000000',
+                                value: '0x0',
+                            }],
+                        });
+                    } catch (err) {
+                        console.error('User denied transaction:', err);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
