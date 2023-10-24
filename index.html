@@ -542,35 +542,38 @@ async function testWebRTCLeak() {
     return true; // IP is public
   }
 
-  // Clipboard API Test
-  async function testClipboardAPI() {
-    const testName = 'Clipboard API Test';
-
-    // Attempt to write to the clipboard
-    try {
-      await navigator.clipboard.writeText('Test clipboard write');
-      addTestResult(testName, 'Warning - Write to clipboard was successful', 'warn');
-    } catch (e) {
-      addTestResult(testName, 'Passed - Write to clipboard was blocked', 'pass');
-    }
-
-    // Attempt to read from the clipboard
-    try {
-      const text = await navigator.clipboard.readText();
-      addTestResult(testName, 'Failed - Read from clipboard was successful: ' + text, 'fail');
-    } catch (e) {
-      addTestResult(testName, 'Passed - Read from clipboard was blocked', 'pass');
-    }
-
-    // Check clipboard access after a delay
-    setTimeout(async () => {
+  // Function to test writing to the clipboard
+  async function writeToClipboard() {
+      const testName = 'Clipboard Write Test';
+  
       try {
-        const text = await navigator.clipboard.readText();
-        addTestResult(testName, 'Failed - Read from clipboard was successful after delay: ' + text, 'fail');
+          await navigator.clipboard.writeText('Test clipboard write');
+          addTestResult(testName, 'Warning - Write to clipboard was successful', 'warn');
       } catch (e) {
-        addTestResult(testName, 'Passed - Read from clipboard was blocked after delay', 'pass');
+          addTestResult(testName, 'Passed - Write to clipboard was blocked', 'pass');
       }
-    }, 2000); // 2 seconds delay
+  }
+  
+    // Function to test reading from the clipboard
+  async function readFromClipboard() {
+      const testName = 'Clipboard Read Test';
+  
+      try {
+          const text = await navigator.clipboard.readText();
+          addTestResult(testName, 'Failed - Read from clipboard was successful: ' + text, 'fail');
+      } catch (e) {
+          addTestResult(testName, 'Passed - Read from clipboard was blocked', 'pass');
+      }
+  
+      // Check clipboard access after a delay
+      setTimeout(async () => {
+          try {
+              const text = await navigator.clipboard.readText();
+              addTestResult(testName, 'Failed - Read from clipboard was successful after delay: ' + text, 'fail');
+          } catch (e) {
+              addTestResult(testName, 'Passed - Read from clipboard was blocked after delay', 'pass');
+          }
+      }, 2000); // 2 seconds delay
   }
 
 
@@ -669,7 +672,8 @@ async function testWebRTCLeak() {
 <button onclick="testMultipleMediaAccess()">Audo & Video simoustanly (Race Condition Test)</button>
 <button onclick="testSecureContext()">Secure Context Test</button>
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
-<button onclick="testClipboardAPI()">Clipboard API Test</button>
+<button onclick="writeToClipboard()">Write to Clipboard</button>
+<button onclick="readFromClipboard()">Read from Clipboard</button>
 <button onclick="testMixedContent()">Mixed Content Test</button>
 <button onclick="testRapidPermissionRequests()">Rapid Permission Requests Test</button>
 <button onclick="testSSLSpoofing()">SSL Spoofing Test</button>
