@@ -395,19 +395,21 @@ function testJSBridge(platform) {
   function testSSLSpoofing() {
     // Attempt to load an HTTPS iframe with an invalid certificate
     var iframe = document.createElement('iframe');
-    // Using a known site with an invalid or self-signed certificate
-    iframe.src = "https://self-signed.badssl.com/";
-    iframe.hidden = true;
-    document.body.appendChild(iframe);
-    
-
+  
+    // Set the event handlers before appending the iframe
     iframe.onload = function() {
       addTestResult('SSL Spoofing Test', 'Failed - Loaded HTTPS content with invalid SSL', 'fail');
     };
     iframe.onerror = function() {
       addTestResult('SSL Spoofing Test', 'Passed - Blocked HTTPS content with invalid SSL', 'pass');
     };
+  
+    // Now set the src attribute and append the iframe to the body
+    iframe.src = "https://self-signed.badssl.com/";
+    iframe.hidden = true;
+    document.body.appendChild(iframe);
   }
+
 
 
   // Secure Context Test
