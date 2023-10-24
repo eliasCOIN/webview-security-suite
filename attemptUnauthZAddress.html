@@ -9,19 +9,17 @@
 <body>
     <h3>Testing Dapp</h3>
 
-    <!-- Existing Buttons -->
-    <button onclick="getAddress()">Get Address</button>
     <p id="addressOutput"></p>
-
-
 
     <script>
         let accounts = [];
+        
         async function init() {
             if (window.ethereum) {
                 window.web3 = new Web3(ethereum);
                 try {
                     accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    getAddress(); // Call getAddress after successfully connecting
                 } catch (error) {
                     console.error('User denied account access...');
                 }
@@ -34,9 +32,9 @@
             }
         }
 
-        async function getAddress() {
+        function getAddress() {
             if (accounts.length === 0) {
-                console.error("No account detected.");
+                document.getElementById("addressOutput").innerText = "No account detected.";
             } else {
                 const userAddress = accounts[0];
                 document.getElementById("addressOutput").innerText = "Your address: " + userAddress;
@@ -45,6 +43,6 @@
         
         window.onload = init;
 
-     </script>
+    </script>
 </body>
 </html>
