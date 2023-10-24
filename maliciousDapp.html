@@ -9,12 +9,9 @@
 <body>
     <h3>Testing Dapp</h3>
 
-    <!-- Existing Buttons -->
     <button onclick="getAddress()">Get Address</button>
     <p id="addressOutput"></p>
     <button onclick="spamTransactions()">Spam Transactions</button>
-
-    <!-- New Test Buttons -->
     <button onclick="openUnexpectedPopup()">Open Unexpected Popup</button>
     <button onclick="infiniteLoop()">Start Infinite Loop</button>
     <button onclick="heavyComputation()">Start Heavy Computation</button>
@@ -38,13 +35,13 @@
                 window.web3 = new Web3(web3.currentProvider);
             }
             else {
-                console.log('Non-Ethereum browser detected. Consider installing MetaMask or another Web3 provider.');
+                console.log('Non-Ethereum browser detected.');
             }
         }
 
         async function getAddress() {
             if (accounts.length === 0) {
-                console.error("No account detected. Please log in to your MetaMask or Web3 provider.");
+                console.error("No account detected.");
             } else {
                 const userAddress = accounts[0];
                 document.getElementById("addressOutput").innerText = "Your address: " + userAddress;
