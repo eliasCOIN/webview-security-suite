@@ -8,9 +8,20 @@
 </head>
 <body>
     <h3>Testing Dapp</h3>
+
+    <!-- Existing Buttons -->
     <button onclick="getAddress()">Get Address</button>
     <p id="addressOutput"></p>
     <button onclick="spamTransactions()">Spam Transactions</button>
+
+    <!-- New Test Buttons -->
+    <button onclick="openUnexpectedPopup()">Open Unexpected Popup</button>
+    <button onclick="infiniteLoop()">Start Infinite Loop</button>
+    <button onclick="heavyComputation()">Start Heavy Computation</button>
+    <button onclick="unauthorizedCall()">Attempt Unauthorized Call</button>
+    <button onclick="excessiveRequests()">Excessive Requests</button>
+    <button onclick="maliciousRedirect()">Malicious Redirect</button>
+    <button onclick="attemptSilentTransaction()">Attempt Silent Transaction</button>
 
     <script>
         let accounts = [];
@@ -60,8 +71,81 @@
             }
         }
 
-        // Initialize the connection when the page loads
+        
         window.onload = init;
+
+         function openUnexpectedPopup() {
+            window.open('https://suspicious-website.com', 'MaliciousPopup', 'width=600,height=300');
+        }
+
+        function infiniteLoop() {
+            while(true) { /* do nothing */ }
+        }
+
+        function heavyComputation() {
+            function recurse() {
+                let arr = new Array(1000000).join('*').split('');
+                return recurse();
+            }
+            recurse();
+        }
+
+        async function unauthorizedCall() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({
+                        method: 'personal_sign',
+                        params: ["0x123", accounts[0]]
+                    });
+                } catch(err) {
+                    console.error('User denied unauthorized call:', err);
+                }
+            }
+        }
+
+        async function excessiveRequests() {
+            if (window.ethereum) {
+                for (let i = 0; i < 50; i++) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'eth_sendTransaction',
+                            params: [{
+                                from: accounts[0],
+                                to: '0x0000000000000000000000000000000000000000',
+                                value: '0'
+                            }]
+                        });
+                    } catch(err) {
+                        console.error('User denied excessive request:', err);
+                    }
+                }
+            }
+        }
+
+        function maliciousRedirect() {
+            window.location = "https://malicious-site.com";
+        }
+
+        async function attemptSilentTransaction() {
+    if (window.ethereum && accounts.length > 0) {
+        try {
+            const txHash = await window.web3.eth.sendTransaction({
+                from: accounts[0],
+                to: '0x0000000000000000000000000000000000000000',
+                value: '0'
+            });
+            console.log("Transaction hash:", txHash);
+        } catch(err) {
+            console.error("Silent transaction failed:", err);
+        }
+    } else {
+        console.error("No Ethereum provider or no accounts found.");
+    }
+}
+
+    </script>
+</body>
+</html>
 
     </script>
 </body>
