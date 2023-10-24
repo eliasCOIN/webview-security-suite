@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Dapp</title>
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.3.5/dist/web3.min.js"></script>
 </head>
 <body>
     <h3>Testing Dapp</h3>
@@ -12,11 +13,12 @@
     <button onclick="spamTransactions()">Spam Transactions</button>
 
     <script>
-        window.addEventListener('load', async () => {
+        let accounts = [];
+        async function init() {
             if (window.ethereum) {
                 window.web3 = new Web3(ethereum);
                 try {
-                    await ethereum.enable();
+                    accounts = await ethereum.request({ method: 'eth_requestAccounts' });
                 } catch (error) {
                     console.error('User denied account access...');
                 }
@@ -27,42 +29,40 @@
             else {
                 console.log('Non-Ethereum browser detected. Consider installing MetaMask or another Web3 provider.');
             }
-        });
+        }
 
-        function getAddress() {
-            if (window.ethereum) {
-                window.web3.eth.getAccounts((err, accounts) => {
-                    if (err) {
-                        console.error("An error occurred:", err);
-                    } else if (accounts.length === 0) {
-                        console.error("No account detected. Please log in to your MetaMask or Web3 provider.");
-                    } else {
-                        const userAddress = accounts[0];
-                        document.getElementById("addressOutput").innerText = "Your address: " + userAddress;
-                    }
-                });
+        async function getAddress() {
+            if (accounts.length === 0) {
+                console.error("No account detected. Please log in to your MetaMask or Web3 provider.");
+            } else {
+                const userAddress = accounts[0];
+                document.getElementById("addressOutput").innerText = "Your address: " + userAddress;
             }
         }
 
         async function spamTransactions() {
-            if (window.ethereum) {
-                const userAddress = (await window.web3.eth.getAccounts())[0];
-
+            if (window.ethereum && accounts.length > 0) {
+                const userAddress = accounts[0];
                 for (let i = 0; i < 5; i++) {
-                    window.web3.eth.sendTransaction({
-                        from: userAddress,
-                        to: '0x0000000000000000000000000000000000000000',
-                        value: window.web3.utils.toWei('0', 'ether')
-                    }, (err, txHash) => {
-                        if (err) {
-                            console.error("Transaction error:", err);
-                        } else {
-                            console.log("Transaction hash:", txHash);
-                        }
-                    });
+                    try {
+                        const txHash = await window.web3.eth.sendTransaction({
+                            from: userAddress,
+                            to: '0x0000000000000000000000000000000000000000',
+                            value: '0'
+                        });
+                        console.log("Transaction hash:", txHash);
+                    } catch (err) {
+                        console.error("Transaction error:", err);
+                    }
                 }
+            } else {
+                console.error("No Ethereum provider or no accounts found.");
             }
         }
+
+        // Initialize the connection when the page loads
+        window.onload = init;
+
     </script>
 </body>
 </html>
