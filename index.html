@@ -347,8 +347,7 @@ function testJSBridge(platform) {
     }
   }
 
-
-// Spoof Address Bar Test
+    /*
   // Function to perform redirection
   function performRedirection(method, url) {
     switch(method) {
@@ -374,7 +373,24 @@ function testJSBridge(platform) {
         console.error('Unknown method:', method);
     }
   }
+    */
 
+  // Spoof Address Bar Test
+  function spoofAddressBar() {
+    var newWindow = window.open('https://www.google.com', '_blank', 'width=800,height=600');
+    if (newWindow) {
+      setTimeout(function() {
+        try {
+          newWindow.document.body.innerHTML = '<div style="font-family: Arial, sans-serif; text-align: center;"><h1>Google</h1><p>Welcome to Google! (But not really, this is a demonstration of content spoofing.)</p></div>';
+        } catch (e) {
+          console.error("Can't modify the contents of the new window, this is expected due to browser security measures.", e);
+        }
+      }, 1000);
+    } else {
+      console.error('The new window was not successfully opened.');
+    }
+  }
+  
   // Function to test SSL spoofing
   function testSSLSpoofing() {
     // Attempt to load an HTTPS iframe with an invalid certificate
@@ -383,6 +399,7 @@ function testJSBridge(platform) {
     iframe.src = "https://self-signed.badssl.com/";
     iframe.hidden = true;
     document.body.appendChild(iframe);
+    
 
     iframe.onload = function() {
       addTestResult('SSL Spoofing Test', 'Failed - Loaded HTTPS content with invalid SSL', 'fail');
@@ -653,15 +670,19 @@ async function testWebRTCLeak() {
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testMixedContent()">Mixed Content Test</button>
 <button onclick="testRapidPermissionRequests()">Rapid Permission Requests Test</button>
+<button onclick="testSSLSpoofing()">SSL Spoofing Test</button>
+  <button onclick="spoofAddressBar()">URL Address Spoofing Test</button>
 
-<!-- Redirection buttons -->
+spoofAddressBar
+  
+<!-- Redirection buttons
 <button onclick="performRedirection('instant', 'http://example.com')">Instant Redirection Test</button>
 <button onclick="performRedirection('timeout', 'http://example.com')">Delayed Redirection Test</button>
 <button onclick="performRedirection('meta', 'http://example.com')">Meta Redirection Test</button>
 <button onclick="performRedirection('replace', 'http://example.com')">Replace Redirection Test</button>
 <button onclick="performRedirection('assign', 'http://example.com')">Assign Redirection Test</button>
-<!-- SSL Spoofing button -->
-<button onclick="testSSLSpoofing()">SSL Spoofing Test</button>
+-->
+
 
   
 <button onclick="testGLBFileUXSS()">GLB File UXSS Test</button>
