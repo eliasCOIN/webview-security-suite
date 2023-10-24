@@ -36,7 +36,64 @@
     testResults.appendChild(result);
   }
 
-  
+  // Test against Audio & Video at the same time (race condition test) 
+  async function testMultipleMediaAccess() {
+    const testName = 'Multiple Media Access Test';
+    try {
+        // Try to request both audio and video at the same time
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+        // If we get here, no exception was thrown, which means permission was granted
+        addTestResult(testName, 'Failed - Accessed multiple media types without proper authorization', 'fail');
+
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+    } catch (error) {
+        let message = '';
+        if (error.name === 'NotAllowedError') {
+            message = 'Permission denied by the user.';
+        } else if (error.name === 'NotFoundError') {
+            message = 'No devices available for the requested media.';
+        } else if (error.name === 'NotReadableError') {
+            message = 'Hardware error.';
+        } else {
+            message = 'Error: ' + error.toString();
+        }
+        addTestResult(testName, message, 'pass');
+    }
+}
+
+  // Testing for Spoofing User Gestures or Permissions
+  async function testRapidPermissionRequests() {
+    const testName = 'Rapid Permission Requests Test';
+    let errors = [];
+
+    // Define a function that requests a permission
+    const requestPermission = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({ video: true });
+            // If we get here, no exception was thrown, which means permission was granted
+            addTestResult(testName, 'Failed - Permission granted unexpectedly', 'fail');
+        } catch (error) {
+            errors.push(error.name);  // Storing the error names for analysis
+        }
+    };
+
+    // Call the function multiple times in quick succession
+    await requestPermission();
+    await requestPermission();
+    await requestPermission();
+
+    // Analyzing the results
+    if (errors.length === 3 && errors.every(err => err === 'NotAllowedError')) {
+        addTestResult(testName, 'Passed - Permissions were consistently denied', 'pass');
+    } else if (errors.some(err => err !== 'NotAllowedError')) {
+        addTestResult(testName, 'Failed - Inconsistent errors during permission requests', 'fail');
+    } else {
+        addTestResult(testName, 'Inconclusive - Unexpected results', 'inconclusive');
+    }
+  }  
+
     // Generic function to request media devices
   async function requestMediaDevice(options, testName) {
     try {
@@ -590,10 +647,13 @@ async function testWebRTCLeak() {
 <button onclick="testAudio()">Test Audio Access</button>
 <button onclick="testVideo()">Test Video Access</button>
 <button onclick="testMultipleVideoStreams()">Test Multiple Video Streams</button>
+<button onclick="testMultipleMediaAccess()">Audo & Video simoustanly (Race Condition Test)</button>
 <button onclick="testSecureContext()">Secure Context Test</button>
 <button onclick="testWebRTCLeak()">WebRTC Leak Test</button>
 <button onclick="testClipboardAPI()">Clipboard API Test</button>
 <button onclick="testMixedContent()">Mixed Content Test</button>
+<button onclick="testRapidPermissionRequests()">Rapid Permission Requests Test</button>
+
 <!-- Redirection buttons -->
 <button onclick="performRedirection('instant', 'http://example.com')">Instant Redirection Test</button>
 <button onclick="performRedirection('timeout', 'http://example.com')">Delayed Redirection Test</button>
