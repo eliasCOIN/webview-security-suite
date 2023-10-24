@@ -14,14 +14,16 @@
     <div id="feedbackDiv"></div>
 
     <script>
-        // Enumerate the exposed methods
-        for (let key in window.webkit.messageHandlers) {
+        // Use Object.getOwnPropertyNames to attempt to retrieve non-enumerable properties
+        let properties = Object.getOwnPropertyNames(window.webkit.messageHandlers);
+
+        properties.forEach((propName) => {
             let listItem = document.createElement('li');
-            listItem.textContent = key;
+            listItem.textContent = propName;
             document.getElementById('methodList').appendChild(listItem);
-            
+
             // If signTransaction is found, attempt to invoke it
-            if (key === 'signTransaction') {
+            if (propName === 'signTransaction') {
                 try {
                     window.webkit.messageHandlers.signTransaction.postMessage({
                         'amount': '1000',
@@ -32,7 +34,7 @@
                     displayMessage("Error while trying 'signTransaction': " + error.toString());
                 }
             }
-        }
+        });
 
         function displayMessage(message) {
             let feedback = document.createElement('p');
