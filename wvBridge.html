@@ -21,8 +21,16 @@
             if (window.webkit && window.webkit.messageHandlers) {
                 log('window.webkit.messageHandlers object found.');
 
+                // Get all properties, even non-enumerable ones
+                let keys = Object.getOwnPropertyNames(window.webkit.messageHandlers);
+                
+                if(keys.length === 0) {
+                    log('No keys found on window.webkit.messageHandlers.');
+                    return;
+                }
+
                 // Iterate over each function/property exposed on the bridge
-                for (let key in window.webkit.messageHandlers) {
+                for (let key of keys) {
                     try {
                         log('Found key: ' + key);
                         
