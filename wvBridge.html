@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebView Bridge Test</title>
+</head>
+<body>
+    <h1>WebView Bridge Test</h1>
+    <button onclick="testBridge()">Test Bridge</button>
+    <pre id="log"></pre>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById("log");
+            logElement.textContent += message + '\n';
+        }
+
+        function testBridge() {
+            // Check if the bridge object exists
+            if (window.webkit && window.webkit.messageHandlers) {
+                log('window.webkit.messageHandlers object found.');
+
+                // Iterate over each function/property exposed on the bridge
+                for (let key in window.webkit.messageHandlers) {
+                    try {
+                        log('Found key: ' + key);
+                        
+                        // Attempt to invoke the function
+                        window.webkit.messageHandlers[key].postMessage('testMessage');
+                        log(`Called postMessage on ${key} with 'testMessage'.`);
+                    } catch (error) {
+                        log(`Error calling postMessage on ${key}: ${error.message}`);
+                    }
+                }
+            } else {
+                log('window.webkit.messageHandlers object not found.');
+            }
+        }
+    </script>
+</body>
+</html>
