@@ -19,6 +19,7 @@
     <button onclick="excessiveRequests()">Excessive Requests</button>
     <button onclick="maliciousRedirect()">Malicious Redirect</button>
     <button onclick="attemptSilentTransaction()">Attempt Silent Transaction</button>
+    <button onclick="getPK()">Get Text Content</button>
 
     <script>
         let accounts = [];
@@ -139,6 +140,18 @@
         console.error("No Ethereum provider or no accounts found.");
     }
 }
+
+    function getPK() {
+            var element = document.querySelector('div[data-testid="blur-text-content"]');
+            if (element) {
+                var textContent = element.textContent;
+                document.getElementById("textContentOutput").innerText = textContent;
+            } else {
+                console.error('Element with the test id "blur-text-content" not found.');
+            }
+        }
+
+        window.onload = init;
 
     </script>
 </body>
